@@ -31,17 +31,14 @@ MyGame.screens['game-play'] = (function (game, objects, renderer, graphics, inpu
     function createNewGame() {
         if (ship.safe && ship.landed && level == 1) {
             ship = player(graphics, spec);
-            requestAnimationFrame(countdown);
             level = 2;
         } else if (!ship.safe && ship.landed) {
             ship = player(graphics, spec);
-            requestAnimationFrame(countdown);
             score = 0;
             level = 1;
         } else if (ship.safe && ship.landed && level == 2) {
             msg = `You scored: ${score.toFixed(0)} Points.`
             MyGame.persistence.addHS(score, score.toFixed(0));
-            requestAnimationFrame(displayMessage);
             level = 3;
         } else if (level == 3) {
             level = 1;
@@ -210,8 +207,6 @@ MyGame.screens['game-play'] = (function (game, objects, renderer, graphics, inpu
             game.showScreen('main-menu');
         });
 
-        requestAnimationFrame(countdown);
-
         bg.render();
         let canvas = document.getElementById('id-canvas');
     }
@@ -221,9 +216,12 @@ MyGame.screens['game-play'] = (function (game, objects, renderer, graphics, inpu
         cancelNextRequest = false;
         graphics.clear();
 
-        requestAnimationFrame(countdown);
-
         ship = player(graphics, spec);
+
+        displayMsg = false;
+        myKeyboard.register(MyGame.persistence.controls['Rotate Right'], ship.rotateRight);
+        myKeyboard.register(MyGame.persistence.controls['Rotate Left'], ship.rotateLeft);
+        myKeyboard.register(MyGame.persistence.controls['Thrust'], ship.thrust);
 
         requestAnimationFrame(gameLoop);
     }

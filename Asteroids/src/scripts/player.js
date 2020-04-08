@@ -46,10 +46,9 @@ function player(graphics, spec) {
     center.radius = size.y / 2;
     let rotation = 3 * Math.PI / 2;
 
-    let accY = 0.05;
+    let accY = 0;
     let accX = 0;
-    let gas = 10;
-    that.score = gas;
+    that.score = 0;
 
     // generate thrust and explosion particle systems.
     let particleSystem = ParticleSystem(graphics, {
@@ -93,25 +92,17 @@ function player(graphics, spec) {
         return false;
     }
 
-    // renders gas, speed, and current rotation of the player.
+    // renders speed, and current rotation of the player.
     function drawStatus() {
-        let fuel = {};
         let speed = {};
         let angle = {};
 
         let ms = (4 * Math.sqrt(Math.pow(accX, 2) + Math.pow(accY, 2))).toFixed(2);
         let deg = (rotation * 180 / Math.PI).toFixed(0);
-        let g = Math.abs(gas.toFixed(2));
 
-        fuel.text = 'fuel      : ' + g + ' s';
         speed.text = 'speed  : ' + ms + ' m/s';
         angle.text = 'angle   : ' + deg + ' deg';
 
-        if (g > 0) {
-            fuel.color = 'green';
-        } else {
-            fuel.color = 'red';
-        }
         if (ms > 2) {
             speed.color = 'red';
         } else {
@@ -123,16 +114,13 @@ function player(graphics, spec) {
             angle.color = 'red';
         }
 
-        fuel.pos = { x: graphics.width - 250, y: 30 };
         speed.pos = { x: graphics.width - 250, y: 60 };
         angle.pos = { x: graphics.width - 250, y: 90 };
 
-        fuel.font = "30px Arial";
         speed.font = "30px Arial";
         angle.font = "30px Arial";
 
 
-        graphics.drawText(fuel);
         graphics.drawText(speed);
         graphics.drawText(angle);
     }
@@ -153,33 +141,26 @@ function player(graphics, spec) {
     that.thrust = function (elapsedTime) {
         if (!that.landed) {
             thrustOK = true;
-            if (gas > 0) {
-                accY -= (elapsedTime / 1000) * Math.cos(rotation);
-                accX += (elapsedTime / 1000) * Math.sin(rotation);
-                gas -= (elapsedTime / 1000);
-                that.score = gas;
-                particleSystem.addParticles({
-                    x: center.x - (size.x / 2) * (Math.sin(rotation)),
-                    y: center.y + (size.y / 2) * Math.cos(rotation),
-                    rot: rotation
-                });
-            } else {
-                gas = 0;
-                thrustSound.pause();
-            }
+            accY -= (elapsedTime / 1000) * Math.cos(rotation);
+            accX += (elapsedTime / 1000) * Math.sin(rotation);
+            that.score = 0;
+            particleSystem.addParticles({
+                x: center.x - (size.x / 2) * (Math.sin(rotation)),
+                y: center.y + (size.y / 2) * Math.cos(rotation),
+                rot: rotation
+            });
         }
     }
 
 
     that.update = function (elapsedTime) {
         if (!that.landed) {
-            if ((accY != 0.05 || accX != 0) || gas < 10) { thrustOK = true; }
+            if ((accY != 0.05 || accX != 0)) { thrustOK = true; }
             if (rotation < 0) {
                 rotation += 2 * Math.PI;
             } else if (rotation > 2 * Math.PI) {
                 rotation -= 2 * Math.PI;
             }
-            accY += (elapsedTime / 5000);
             center = { x: center.x + accX, y: center.y + accY, radius: size.y / 2 };
         } else {
             thrustOK = false;;
