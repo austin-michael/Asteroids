@@ -1,4 +1,4 @@
-function player(graphics, spec, terrain) {
+function player(graphics, spec) {
     let that = {}
 
     let isReady = false;
@@ -181,25 +181,6 @@ function player(graphics, spec, terrain) {
             }
             accY += (elapsedTime / 5000);
             center = { x: center.x + accX, y: center.y + accY, radius: size.y / 2 };
-            for (i = 0; i < terrain.length - 2; i++) {
-                if (lineCircleIntersection(terrain[i], terrain[i + 1], center)) {
-                    that.landed = true;
-                    thrustSound.removeEventListener('canplay', handleThrust());
-                    let ms = (4 * Math.sqrt(Math.pow(accX, 2) + Math.pow(accY, 2))).toFixed(2);
-                    let deg = (rotation * 180 / Math.PI).toFixed(0);
-                    if (ms <= 2 && (deg < 5 || deg > 355) && terrain[i].safe) {
-                        that.safe = true;
-                    }
-                    else {
-                        particleSystem.createExplosion({
-                            x: center.x, y: center.y, rot: rotation
-                        });
-                        particleSystemSmoke.createExplosion({ x: center.x, y: center.y, rot: rotation });
-                        thrustSound.pause();
-                        explosionSound.play();
-                    }
-                }
-            }
         } else {
             thrustOK = false;;
         }

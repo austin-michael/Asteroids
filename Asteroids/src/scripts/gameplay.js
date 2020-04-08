@@ -11,7 +11,7 @@ MyGame.screens['game-play'] = (function (game, objects, renderer, graphics, inpu
     let displayMsg = false;
 
     let bg = background(graphics, {
-        bgImg: 'src/images/galaxy.jpg',
+        bgImg: 'src/images/black.jpg',
         width: graphics.width,
         height: graphics.height
     });
@@ -23,21 +23,18 @@ MyGame.screens['game-play'] = (function (game, objects, renderer, graphics, inpu
     let score = 0;
     let msg = '';
 
-    let myTerrain = terrain(graphics);
 
     let spec = { playerIm: 'src/images/ship.png' };
-    let ship = player(graphics, spec, myTerrain.ter);
+    let ship = player(graphics, spec);
 
     // make a new game model based on current state.
     function createNewGame() {
         if (ship.safe && ship.landed && level == 1) {
-            myTerrain = terrain(graphics, 1);
-            ship = player(graphics, spec, myTerrain.ter);
+            ship = player(graphics, spec);
             requestAnimationFrame(countdown);
             level = 2;
         } else if (!ship.safe && ship.landed) {
-            myTerrain = terrain(graphics, 2);
-            ship = player(graphics, spec, myTerrain.ter);
+            ship = player(graphics, spec);
             requestAnimationFrame(countdown);
             score = 0;
             level = 1;
@@ -86,7 +83,6 @@ MyGame.screens['game-play'] = (function (game, objects, renderer, graphics, inpu
         if (!displayMsg) {
             graphics.clear();
             bg.render();
-            myTerrain.render();
             ship.render();
         }
     }
@@ -124,7 +120,6 @@ MyGame.screens['game-play'] = (function (game, objects, renderer, graphics, inpu
         displayMsg = true;
         graphics.clear();
         bg.render();
-        myTerrain.render();
         ship.update(elapsedTime);
         ship.render();
         renderMsg();
@@ -167,7 +162,6 @@ MyGame.screens['game-play'] = (function (game, objects, renderer, graphics, inpu
         displayMsg = true;
         graphics.clear();
         bg.render();
-        myTerrain.render();
         ship.render();
         renderCountdown();
 
@@ -226,11 +220,10 @@ MyGame.screens['game-play'] = (function (game, objects, renderer, graphics, inpu
         lastTimeStamp = performance.now();
         cancelNextRequest = false;
         graphics.clear();
-        myTerrain = terrain(graphics);
 
         requestAnimationFrame(countdown);
 
-        ship = player(graphics, spec, myTerrain.ter);
+        ship = player(graphics, spec);
 
         requestAnimationFrame(gameLoop);
     }
