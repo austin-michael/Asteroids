@@ -1,18 +1,21 @@
-let http = require('http');
-let path = require('path');
-let fs = require('fs');
+let http = require('http'),
+    path = require('path'),
+    fs = require('fs'),
+    game = require('./scripts/server/game');
+
 let mimeTypes = {
-    '.js' : 'text/javascript',
-    '.html' : 'text/html',
-    '.css' : 'text/css',
-    '.png' : 'image/png',
-    '.jpg' : 'image/jpeg',
-    '.mp3' : 'audio/mpeg3',
-    '.map' : 'application/octet-stream'
+        '.js' : 'text/javascript',
+        '.html' : 'text/html',
+        '.css' : 'text/css',
+        '.png' : 'image/png',
+        '.jpg' : 'image/jpeg',
+        '.mp3' : 'audio/mpeg3',
+        '.map' : 'application/json',
+        '.map' : 'application/octet-stream' // Chrome is requesting socket.io;'s source map file
     };
 
 function handleRequest(request, response) {
-    let lookup = (request.url === '/') ? '/index-source.html' : decodeURI(request.url);
+    let lookup = (request.url === '/') ? '/index.html' : decodeURI(request.url);
     let file = lookup.substring(1, lookup.length);
 
     fs.exists(file, function(exists) {
@@ -22,7 +25,7 @@ function handleRequest(request, response) {
                     response.writeHead(500);
                     response.end('Server Error!');
                 } else {
-                    var headers = {'Content-type': mimeTypes[path.extname(lookup)]};
+                    let headers = {'Content-type': mimeTypes[path.extname(lookup)]};
                     response.writeHead(200, headers);
                     response.end(data);
                 }
@@ -35,37 +38,8 @@ function handleRequest(request, response) {
 }
 
 let server = http.createServer(handleRequest);
-let io = require('socket.io')(server);
-let display = [];
-
-io.on('connection', function(socket) {
-    console.log('Connection established');
-    socket.emit('ack', {
-        message: 'Connection established'
-    });
-
-    socket.on('move', function(data) {
-        display.forEach(function(client) {
-            client.emit('move', data);
-        });
-    });
-
-    socket.on('rotate', function(data) {
-        display.forEach(function(client) {
-            client.emit('rotate', data);
-        });
-    });
-
-    socket.on('display-connect', function(data) {
-        display.push(socket);
-    });
-
-    socket.on('disconnect', function() {
-        display = display.filter(d => d !== socket);
-    });
-});
-
 
 server.listen(3000, function() {
-    console.log('Server is listening');
+    game.initialize(server);
+    console.log('Server is listening on port 3000');
 });

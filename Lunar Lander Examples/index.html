@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<link rel="stylesheet" type="text/css" href="./src/styles/styles.css">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Lunar Lander</title>
+    <script type="text/javascript">
+        function resize_canvas() {
+            canvas = document.getElementById("id-canvas");
+            if (canvas.width < window.innerWidth) {
+                canvas.width = window.innerWidth;
+            }
+
+            if (canvas.height < window.innerHeight) {
+                canvas.height = window.innerHeight;
+            }
+        }
+    </script>
+</head>
+
+<body onresize="resize_canvas()" onload="MyGame.game.initialize();">
+    <div id="game">
+
+
+        <div id="main-menu" class="screen">
+            <ul class="menu">
+                <li><button id="id-new-game">New&nbsp;Game</button></li>
+                <li><button id="id-high-scores">High&nbsp;Scores</button></li>
+                <li><button id="id-controls">Controls</button></li>
+                <li><button id="id-credits">Credits</button></li>
+            </ul>
+        </div>
+
+
+        <div id="game-play">
+            <canvas id="id-canvas"></canvas>
+        </div>
+
+
+        <div id="high-scores" class="screen">
+            <h1>High Scores</h1>
+            <ol id="high-score-list"></ol>
+            <ul class="menu">
+                <li><button id="id-high-scores-back">Back</button></li>
+            </ul>
+        </div>
+
+
+        <div id="controls" class="screen">
+            <h1>Controls</h1>
+            <ol id="controls-list"></ol>
+            <ul class="menu">
+                <li><button id="id-controls-back">Back</button></li>
+            </ul>
+        </div>
+
+
+        <div id="credits" class="screen">
+            <h1>Credits</h1>
+            <ol id="credits-list"></ol>
+            <ul class="menu">
+                <li><button id="id-credits-back">Back</button></li>
+            </ul>
+        </div>
+
+
+    </div>
+
+    <script>
+        let MyGame = {
+            screens: {},
+            input: {},
+            objects: {},
+            render: []
+        };
+    </script>
+
+    <script src="/node_modules/socket.io-client/dist/socket.io.slim.js"></script>
+    <script src="./src//scripts/graphics.js"></script>
+    <script src="./src//scripts/particle-system.js"></script>
+    <script src="./src//scripts/input-keyboard.js"></script>
+    <script src="./src/scripts/background.js"></script>
+    <script src="./src/scripts/random.js"></script>
+    <script src="./src/scripts/player.js"></script>
+    <script src="./src/scripts/game.js"></script>
+    <script src="./src/scripts/mainmenu.js"></script>
+    <script src="./src/scripts/highscores.js"></script>
+    <script src="./src/scripts/gameplay.js"></script>
+    <script src="./src/scripts/controls.js"></script>
+    <script src="./src/scripts/persistence.js"></script>
+    <script src="./src/scripts/credits.js"></script>
+</body>
+
+</html>

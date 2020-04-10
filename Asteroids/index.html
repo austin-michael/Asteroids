@@ -1,29 +1,35 @@
+<!-- <!DOCTYPE HTML>
+<html lang = "en-US">
+<head>
+    <meta charset = "UTF-8">
+    <title>Multiplayer - Complete</title>
+    <script src = "/node_modules/socket.io-client/dist/socket.io.slim.js"></script>
+</head>
+<body>
+    <canvas id = "canvas-main" width = "600" height = "600" style = "background-color: rgb(0, 0, 0)"></canvas>
+
+    <script data-main = "scripts/client/loader" src = "scripts/client/require.js"></script>
+</body>
+</html> -->
+
 <!DOCTYPE html>
 <html lang="en-US">
-<link rel="stylesheet" type="text/css" href="./src/styles/styles.css">
+<link rel="stylesheet" type="text/css" href="./styles/styles.css">
 
 <head>
     <meta charset="UTF-8">
-    <title>Lunar Lander</title>
-    <script type="text/javascript">
-        function resize_canvas() {
-            canvas = document.getElementById("id-canvas");
-            if (canvas.width < window.innerWidth) {
-                canvas.width = window.innerWidth;
-            }
-
-            if (canvas.height < window.innerHeight) {
-                canvas.height = window.innerHeight;
-            }
-        }
-    </script>
+    <title>Asteroids</title>
+    <script src = "/node_modules/socket.io-client/dist/socket.io.slim.js"></script>
 </head>
 
-<body onresize="resize_canvas()" onload="MyGame.game.initialize();">
+<body>
     <div id="game">
 
-
         <div id="main-menu" class="screen">
+            <form>
+                <label for="username">username</label>
+                <input type="text" id="username" name="username">
+            </form>
             <ul class="menu">
                 <li><button id="id-new-game">New&nbsp;Game</button></li>
                 <li><button id="id-high-scores">High&nbsp;Scores</button></li>
@@ -32,11 +38,9 @@
             </ul>
         </div>
 
-
-        <div id="game-play">
-            <canvas id="id-canvas"></canvas>
+        <div id="game-play" class="screen" style="margin-left: auto; margin-right: auto;">
+            <canvas id = "canvas-main" width = "600" height = "600" style = "background-color: rgb(0, 0, 0)"></canvas>
         </div>
-
 
         <div id="high-scores" class="screen">
             <h1>High Scores</h1>
@@ -46,7 +50,6 @@
             </ul>
         </div>
 
-
         <div id="controls" class="screen">
             <h1>Controls</h1>
             <ol id="controls-list"></ol>
@@ -54,7 +57,6 @@
                 <li><button id="id-controls-back">Back</button></li>
             </ul>
         </div>
-
 
         <div id="credits" class="screen">
             <h1>Credits</h1>
@@ -64,32 +66,18 @@
             </ul>
         </div>
 
-
     </div>
 
-    <script>
+    <!-- <script>
         let MyGame = {
             screens: {},
             input: {},
             objects: {},
             render: []
         };
-    </script>
+    </script> -->
 
-    <script src="/node_modules/socket.io-client/dist/socket.io.slim.js"></script>
-    <script src="./src//scripts/graphics.js"></script>
-    <script src="./src//scripts/particle-system.js"></script>
-    <script src="./src//scripts/input-keyboard.js"></script>
-    <script src="./src/scripts/background.js"></script>
-    <script src="./src/scripts/random.js"></script>
-    <script src="./src/scripts/player.js"></script>
-    <script src="./src/scripts/game.js"></script>
-    <script src="./src/scripts/mainmenu.js"></script>
-    <script src="./src/scripts/highscores.js"></script>
-    <script src="./src/scripts/gameplay.js"></script>
-    <script src="./src/scripts/controls.js"></script>
-    <script src="./src/scripts/persistence.js"></script>
-    <script src="./src/scripts/credits.js"></script>
+    <script data-main = "scripts/client/loader" src = "scripts/client/require.js"></script>
 </body>
 
 </html>
