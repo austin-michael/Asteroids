@@ -6,11 +6,7 @@
 MyGame.renderer.PlayerRemote = (function (graphics) {
     'use strict';
     let that = {};
-
-    const WORLD_WIDTH = 3840;
-    const WORLD_HEIGHT = 2304;
-    const WINDOW_WIDTH = 600;
-    const WINDOW_HEIGHT = 600;
+    
     const TILE_WIDTH = 15;
     const TILE_HEIGHT = 9;
     const SINGLE_TILE_WIDTH = 1 / TILE_WIDTH;
@@ -53,11 +49,6 @@ MyGame.renderer.PlayerRemote = (function (graphics) {
             } else {
                 otherPlayerLocalPosition.y = (localY % 1) - (1-(otherY % 1)) - (ourY % 1);
             }
-
-            console.log('X: ', otherPlayerLocalPosition.x);
-            console.log('localX: ', localX);
-            console.log('ourX: ', ourX);
-            console.log('otherX: ', otherX);
 
             graphics.saveContext();
             graphics.rotateCanvas(otherPlayerLocalPosition, otherPlayerModel.state.direction);

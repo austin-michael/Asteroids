@@ -321,7 +321,7 @@ MyGame.screens['game-play'] = (function(graphics, renderer, input, components) {
         }
 
         for (let missile in missiles) {
-            renderer.Missile.render(missiles[missile]);
+            renderer.Missile.render(missiles[missile], playerSelf.model);
         }
 
         for (let id in explosions) {

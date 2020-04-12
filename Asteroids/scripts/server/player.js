@@ -25,7 +25,7 @@ function createPlayer(name) {
     let size = {
         width: 0.05,
         height: 0.05,
-        radius: 0.05
+        radius: 0.0005
     };
     let direction = random.nextDouble() * 2 * Math.PI;    // Angle in radians
     let rotateRate = Math.PI / 1000;    // radians per millisecond
