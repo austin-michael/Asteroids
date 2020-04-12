@@ -325,7 +325,7 @@ MyGame.screens['game-play'] = (function(graphics, renderer, input, components) {
         }
 
         for (let id in explosions) {
-            renderer.AnimatedSprite.render(explosions[id]);
+            renderer.AnimatedSprite.render(explosions[id], playerSelf.model);
         }
     }
 
