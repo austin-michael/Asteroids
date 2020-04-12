@@ -23,10 +23,10 @@ MyGame.renderer.PlayerRemote = (function (graphics) {
     // ------------------------------------------------------------------
 
     that.render = function (otherPlayerModel, texture, playerModel) {
-        if (otherPlayerModel.state.position.x >= playerModel.position.x - (SINGLE_TILE_WIDTH / 2) &&
-            otherPlayerModel.state.position.x <= playerModel.position.x + (SINGLE_TILE_WIDTH / 2) &&
-            otherPlayerModel.state.position.y >= playerModel.position.y - (SINGLE_TILE_HEIGHT / 2) &&
-            otherPlayerModel.state.position.y <= playerModel.position.y + (SINGLE_TILE_HEIGHT / 2)) {
+        if (otherPlayerModel.state.position.x >= playerModel.position.x - (SINGLE_TILE_WIDTH) &&
+            otherPlayerModel.state.position.x <= playerModel.position.x + (SINGLE_TILE_WIDTH) &&
+            otherPlayerModel.state.position.y >= playerModel.position.y - (SINGLE_TILE_HEIGHT) &&
+            otherPlayerModel.state.position.y <= playerModel.position.y + (SINGLE_TILE_HEIGHT)) {
 
 
             let otherX = (otherPlayerModel.state.position.x / SINGLE_TILE_WIDTH);
@@ -35,8 +35,8 @@ MyGame.renderer.PlayerRemote = (function (graphics) {
             let ourX = (playerModel.position.x / SINGLE_TILE_WIDTH);
             let ourY = (playerModel.position.y / SINGLE_TILE_HEIGHT);
 
-            let localX = (playerModel.localPosition.x / SINGLE_TILE_WIDTH);
-            let localY = (playerModel.localPosition.y / SINGLE_TILE_HEIGHT);
+            let localX = (playerModel.localPosition.x);
+            let localY = (playerModel.localPosition.y);
 
             let otherPlayerLocalPosition = {}
             if (Math.floor(ourX) < Math.floor(otherX)) {
