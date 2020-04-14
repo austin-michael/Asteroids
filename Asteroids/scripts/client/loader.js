@@ -4,7 +4,9 @@ MyGame = {
     components: {},
     renderer: {},
     utilities: {},
-    assets: {}
+    assets: {},
+    persistence: {},
+    controls: {}
 };
 
 //------------------------------------------------------------------
@@ -28,10 +30,14 @@ MyGame.loader = (function () {
             onComplete: null,
         }, {
             scripts: ['input'],
-            message: 'Input loaded',
+            message: 'Input & persistence loaded',
             onComplete: null
         }, {
-            scripts: ['components/player', 'components/player-remote', 'components/missile', 'components/animated-sprite'],
+            scripts: ['controls', 'highscores', 'credits'],
+            message: 'Controls loaded',
+            onComplete: null,
+        }, {
+            scripts: ['components/player', 'components/player-remote', 'components/missile', 'components/animated-sprite', 'components/asteroid'],
             message: 'Player models loaded',
             onComplete: null
         }, {
@@ -39,7 +45,7 @@ MyGame.loader = (function () {
             message: 'Graphics loaded',
             onComplete: null
         }, {
-            scripts: ['rendering/player', 'rendering/player-remote', 'rendering/missile', 'rendering/animated-sprite'],
+            scripts: ['rendering/player', 'rendering/player-remote', 'rendering/missile', 'rendering/animated-sprite', 'rendering/mini-map', 'rendering/asteroid'],
             message: 'Renderers loaded',
             onComplete: null
         }, {
@@ -49,6 +55,10 @@ MyGame.loader = (function () {
         }, {
             scripts: ['mainmenu'],
             message: 'menu loaded',
+            onComplete: null
+        }, {
+            scripts: ['persistence'],
+            message: 'persistence loaded',
             onComplete: null
         }],
         assetOrder = [{
@@ -60,6 +70,21 @@ MyGame.loader = (function () {
         }, {
             key: 'explosion',
             source: 'assets/explosion.png'
+        }, {
+            key: 'black',
+            source: 'assets/black.jpg'
+        }, {
+            key: 'white',
+            source: 'assets/white.jpg'
+        }, {
+            key: 'red',
+            source: 'assets/red.jpg'
+        }, {
+            key: 'green',
+            source: 'assets/green.jpg'
+        }, {
+            key: 'asteroid',
+            source: 'assets/asteroid.png'
         }, {
             key: 'world',
             source: 'assets/world_cropped.jpg'

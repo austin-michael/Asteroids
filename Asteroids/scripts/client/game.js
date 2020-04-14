@@ -3,7 +3,7 @@
 // This function provides the "game" code.
 //
 //------------------------------------------------------------------
-MyGame.screens['game-play'] = (function(graphics, renderer, input, components) {
+MyGame.screens['game-play'] = (function (graphics, renderer, input, components) {
     'use strict';
 
     let lastTimeStamp = performance.now(),
@@ -14,14 +14,17 @@ MyGame.screens['game-play'] = (function(graphics, renderer, input, components) {
         },
         playerOthers = {},
         missiles = {},
+        asteroids = {},
+
         explosions = {},
         messageHistory = Queue.create(),
         messageId = 1,
         nextExplosionId = 1,
         socket = io(),
-        networkQueue = Queue.create();
+        networkQueue = Queue.create(),
+        cancelNextRequest = true;
 
-    
+
     socket.on(NetworkIds.CONNECT_ACK, data => {
         networkQueue.enqueue({
             type: NetworkIds.CONNECT_ACK,
@@ -70,7 +73,14 @@ MyGame.screens['game-play'] = (function(graphics, renderer, input, components) {
             data: data
         });
     });
-    
+
+    socket.on(NetworkIds.ASTEROID_NEW, data => {
+        networkQueue.enqueue({
+            type: NetworkIds.ASTEROID_NEW,
+            data: data
+        });
+    });
+
 
     //------------------------------------------------------------------
     //
@@ -100,7 +110,6 @@ MyGame.screens['game-play'] = (function(graphics, renderer, input, components) {
     //
     //------------------------------------------------------------------
     function connectPlayerOther(data) {
-        console.log(data);
         let model = components.PlayerRemote();
         model.state.position.x = data.position.x;
         model.state.position.y = data.position.y;
@@ -215,6 +224,25 @@ MyGame.screens['game-play'] = (function(graphics, renderer, input, components) {
 
     //------------------------------------------------------------------
     //
+    // Handler for receiving notice of a new asteroid in the environment.
+    //
+    //------------------------------------------------------------------
+    function asteroidNew(data) {
+        console.log(data);
+        asteroids[data.id] = components.Asteroid({
+            id: data.id,
+            radius: data.radius,
+            speed: data.speed,
+            direction: data.direction,
+            position: {
+                x: data.position.x,
+                y: data.position.y
+            },
+        });
+    }
+
+    //------------------------------------------------------------------
+    //
     // Handler for receiving notice that a missile has hit a player.
     //
     //------------------------------------------------------------------
@@ -222,16 +250,17 @@ MyGame.screens['game-play'] = (function(graphics, renderer, input, components) {
         explosions[nextExplosionId] = components.AnimatedSprite({
             id: nextExplosionId++,
             spriteSheet: MyGame.assets['explosion'],
-            spriteSize: { width: 0.07, height: 0.07 },
+            spriteSize: { width: 0.07 * data.radius, height: 0.07 * data.radius },
             spriteCenter: data.position,
             spriteCount: 16,
-            spriteTime: [ 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50]
+            spriteTime: [50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50]
         });
 
         //
         // When we receive a hit notification, go ahead and remove the
         // associated missle from the client model.
         delete missiles[data.missileId];
+        delete asteroids[data.asteroidId];
     }
 
     //------------------------------------------------------------------
@@ -274,6 +303,9 @@ MyGame.screens['game-play'] = (function(graphics, renderer, input, components) {
                 case NetworkIds.MISSILE_HIT:
                     missileHit(message.data);
                     break;
+                case NetworkIds.ASTEROID_NEW:
+                    asteroidNew(message.data);
+                    break;
             }
         }
     }
@@ -305,6 +337,10 @@ MyGame.screens['game-play'] = (function(graphics, renderer, input, components) {
                 delete explosions[id];
             }
         }
+
+        for (let ast in asteroids) {
+            asteroids[ast].update(elapsedTime);
+        }
     }
 
     //------------------------------------------------------------------
@@ -314,6 +350,9 @@ MyGame.screens['game-play'] = (function(graphics, renderer, input, components) {
     //------------------------------------------------------------------
     function render() {
         graphics.clear();
+        if (cancelNextRequest) {
+            return;
+        }
         renderer.Player.render(playerSelf.model, playerSelf.texture);
         for (let id in playerOthers) {
             let player = playerOthers[id];
@@ -324,9 +363,15 @@ MyGame.screens['game-play'] = (function(graphics, renderer, input, components) {
             renderer.Missile.render(missiles[missile], playerSelf.model);
         }
 
+        for (let ast in asteroids) {
+            renderer.Asteroid.render(asteroids[ast], playerSelf.model, MyGame.assets['asteroid']);
+        }
+
         for (let id in explosions) {
             renderer.AnimatedSprite.render(explosions[id], playerSelf.model);
         }
+
+        renderer.miniMap.render(playerSelf, playerOthers, asteroids);
     }
 
     //------------------------------------------------------------------
@@ -353,59 +398,73 @@ MyGame.screens['game-play'] = (function(graphics, renderer, input, components) {
     //------------------------------------------------------------------
     function initialize() {
         console.log('game initializing...');
-        //
-        // Create the keyboard input handler and register the keyboard commands
-        myKeyboard.registerHandler(elapsedTime => {
-                let message = {
-                    id: messageId++,
-                    elapsedTime: elapsedTime,
-                    type: NetworkIds.INPUT_MOVE
-                };
-                socket.emit(NetworkIds.INPUT, message);
-                messageHistory.enqueue(message);
-                playerSelf.model.move(elapsedTime);
-            },
-            'w', true);
-
-        myKeyboard.registerHandler(elapsedTime => {
-                let message = {
-                    id: messageId++,
-                    elapsedTime: elapsedTime,
-                    type: NetworkIds.INPUT_ROTATE_RIGHT
-                };
-                socket.emit(NetworkIds.INPUT, message);
-                messageHistory.enqueue(message);
-                playerSelf.model.rotateRight(elapsedTime);
-            },
-            'd', true);
-
-        myKeyboard.registerHandler(elapsedTime => {
-                let message = {
-                    id: messageId++,
-                    elapsedTime: elapsedTime,
-                    type: NetworkIds.INPUT_ROTATE_LEFT
-                };
-                socket.emit(NetworkIds.INPUT, message);
-                messageHistory.enqueue(message);
-                playerSelf.model.rotateLeft(elapsedTime);
-            },
-            'a', true);
-
-        myKeyboard.registerHandler(elapsedTime => {
-                let message = {
-                    id: messageId++,
-                    elapsedTime: elapsedTime,
-                    type: NetworkIds.INPUT_FIRE
-                };
-                socket.emit(NetworkIds.INPUT, message);
-            },
-            ' ', false);
 
         //
         // Get the game loop started
     }
     function run() {
-        socket.emit(NetworkIds.CREATE_PLAYER, {username: MyGame.username});
+        //
+        // Create the keyboard input handler and register the keyboard commands
+        myKeyboard.registerHandler(elapsedTime => {
+            let message = {
+                id: messageId++,
+                elapsedTime: elapsedTime,
+                type: NetworkIds.INPUT_MOVE
+            };
+            socket.emit(NetworkIds.INPUT, message);
+            messageHistory.enqueue(message);
+            playerSelf.model.move(elapsedTime);
+        },
+            MyGame.persistence.controls['Thrust'], true);
+
+        myKeyboard.registerHandler(elapsedTime => {
+            let message = {
+                id: messageId++,
+                elapsedTime: elapsedTime,
+                type: NetworkIds.INPUT_ROTATE_RIGHT
+            };
+            socket.emit(NetworkIds.INPUT, message);
+            messageHistory.enqueue(message);
+            playerSelf.model.rotateRight(elapsedTime);
+        },
+            MyGame.persistence.controls['Rotate Right'], true);
+
+        myKeyboard.registerHandler(elapsedTime => {
+            let message = {
+                id: messageId++,
+                elapsedTime: elapsedTime,
+                type: NetworkIds.INPUT_ROTATE_LEFT
+            };
+            socket.emit(NetworkIds.INPUT, message);
+            messageHistory.enqueue(message);
+            playerSelf.model.rotateLeft(elapsedTime);
+        },
+            MyGame.persistence.controls['Rotate Left'], true);
+
+        myKeyboard.registerHandler(elapsedTime => {
+            let message = {
+                id: messageId++,
+                elapsedTime: elapsedTime,
+                type: NetworkIds.INPUT_FIRE
+            };
+            socket.emit(NetworkIds.INPUT, message);
+        },
+            MyGame.persistence.controls['Fire'], false);
+
+        // myKeyboard.registerHandler(elapsedTime => {
+        //     let message = {
+        //         id: messageId++,
+        //         elapsedTime: elapsedTime,
+        //         type: NetworkIds.INPUT_FIRE
+        //     };
+        //     //socket.emit(NetworkIds.INPUT, message);
+        //     cancelNextRequest = true;
+        //     MyGame.game.showScreen('main-menu');
+        // },
+        //     'Escape', false);
+
+        cancelNextRequest = false;
+        socket.emit(NetworkIds.CREATE_PLAYER, { username: MyGame.username });
         requestAnimationFrame(gameLoop);
     }
 
@@ -413,7 +472,7 @@ MyGame.screens['game-play'] = (function(graphics, renderer, input, components) {
         initialize: initialize,
         run: run
     };
- 
+
 }(MyGame.graphics, MyGame.renderer, MyGame.input, MyGame.components));
 
 // ------------------------------------------------------------------

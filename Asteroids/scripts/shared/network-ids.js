@@ -63,6 +63,10 @@
         'CREATE_PLAYER': {
             value: 'create-player',
             writable: false
+        },
+        'ASTEROID_NEW': {
+            value: 'asteroid-new',
+            writable: false
         }
     });
 

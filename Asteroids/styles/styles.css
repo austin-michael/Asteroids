@@ -12,6 +12,36 @@ canvas {
     bottom: 0; */
 }
 
+form {
+    text-align: center;
+    font-family: Arial, sans-serif;
+    font-size: 3em;
+    color: #CECEF6;
+    width: 8em;
+    height: 3em;
+    background: #0404B4;
+    border: 0.1em solid rgb(255, 0, 0);
+    border-radius: 2em;
+    box-shadow: 0.2em 0.2em 0.3em rgb(0, 0, 0);
+    z-index: 2;
+    margin-top: .25em;
+    display: inline-block;
+}
+
+#form-div {
+    text-align: center;
+}
+
+input {
+    border-radius: 1px;
+    border: 0.1em solid rgb(255, 0, 0);
+}
+
+label {
+    font-size: 32px;
+    color:#CECEF6;
+}
+
 #game .screen {
     display: none;
 }
@@ -22,7 +52,7 @@ canvas {
 
 #main-menu {
     padding-top: 1em;
-    cursor: pointer;
+    /* cursor: pointer; */
     font-size: 0.75em;
 }
 
@@ -54,6 +84,7 @@ ul li button {
 
 ul li button:hover {
     background: #2E2EFE;
+    cursor: pointer;
 }
 
 ul li button:active {
@@ -71,8 +102,8 @@ ol {
 
 .credit {
     font-family: Arial, sans-serif;
-    font-size: 4em;
-    color: white;
+    font-size: 2em;
+    color: black;
     margin-top: .5em;
 }
 
@@ -102,7 +133,7 @@ ol li button:active {
 
 #game div h1 {
     font-size: 5em;
-    color: white;
+    color: black;
     text-align: center;
 }
 
@@ -114,7 +145,7 @@ ol li button:active {
 }
 
 #high-scores ol li {
-    color: white;
+    color: black;
     font-size: 3em;
 }
 

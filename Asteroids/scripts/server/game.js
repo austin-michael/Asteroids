@@ -8,6 +8,7 @@
 let present = require('present');
 let Player = require('./player');
 let Missile = require('./missile');
+let Asteroids = require('./asteroids');
 let NetworkIds = require('../shared/network-ids');
 let Queue = require('../shared/queue.js');
 
@@ -21,6 +22,9 @@ let activeMissiles = [];
 let hits = [];
 let inputQueue = Queue.create();
 let nextMissileId = 1;
+let activeAsteroids = [];
+let newAsteroids = [];
+
 
 //------------------------------------------------------------------
 //
@@ -105,6 +109,10 @@ function update(elapsedTime, currentTime) {
         newMissiles[missile].update(elapsedTime);
     }
 
+    for (let ast in activeAsteroids) {
+        activeAsteroids[ast].update(elapsedTime);
+    }
+
     let keepMissiles = [];
     for (let missile = 0; missile < activeMissiles.length; missile++) {
         //
@@ -121,18 +129,28 @@ function update(elapsedTime, currentTime) {
     keepMissiles = [];
     for (let missile = 0; missile < activeMissiles.length; missile++) {
         let hit = false;
-        for (let clientId in activeClients) {
-            //
-            // Don't allow a missile to hit the player it was fired from.
-            if (clientId !== activeMissiles[missile].clientId) {
-                if (collided(activeMissiles[missile], activeClients[clientId].player)) {
-                    hit = true;
-                    hits.push({
-                        clientId: clientId,
-                        missileId: activeMissiles[missile].id,
-                        position: activeClients[clientId].player.position
-                    });
+        for (let asteroidId in activeAsteroids) {
+            if (collided(activeMissiles[missile], { position: activeAsteroids[asteroidId].position, radius: activeAsteroids[asteroidId].radius * .0008 })) {
+                hit = true;
+                hits.push({
+                    asteroidId: activeAsteroids[asteroidId].id,
+                    missileId: activeMissiles[missile].id,
+                    position: activeAsteroids[asteroidId].position,
+                    radius: activeAsteroids[asteroidId].radius
+                })
+                if (activeAsteroids[asteroidId].radius > 1){
+                    let ast1 = Asteroids.create({x: activeAsteroids[asteroidId].position.x, y: activeAsteroids[asteroidId].position.y, radius: activeAsteroids[asteroidId].radius});
+                    let ast2 = Asteroids.create({x: activeAsteroids[asteroidId].position.x, y: activeAsteroids[asteroidId].position.y, radius: activeAsteroids[asteroidId].radius});
+                    let ast3 = Asteroids.create({x: activeAsteroids[asteroidId].position.x, y: activeAsteroids[asteroidId].position.y, radius: activeAsteroids[asteroidId].radius});
+                    delete activeAsteroids[asteroidId];
+                    newAsteroids.push(ast1);
+                    newAsteroids.push(ast2);
+                    newAsteroids.push(ast3);
+                    activeAsteroids.push(ast1);
+                    activeAsteroids.push(ast2);
+                    activeAsteroids.push(ast3);
                 }
+
             }
         }
         if (!hit) {
@@ -214,7 +232,25 @@ function updateClients(elapsedTime) {
         for (let hit = 0; hit < hits.length; hit++) {
             client.socket.emit(NetworkIds.MISSILE_HIT, hits[hit]);
         }
+
+        for (let ast = 0; ast < newAsteroids.length; ast++) {
+            client.socket.emit(NetworkIds.ASTEROID_NEW, {
+                speed: newAsteroids[ast].speed,
+                id: newAsteroids[ast].id,
+                position: newAsteroids[ast].position,
+                direction: newAsteroids[ast].direction,
+                radius: newAsteroids[ast].radius,
+            });
+        }
+
+
+        //
+        // Report any new asteroids to the active clients
+        // for (let asteroid = 0; asteroid < Asteroids.length; asteroid++) {
+        //     client.socket.emit(NetworkIds.ASTEROID_NEW, Asteroids[asteroid]);
+        // }
     }
+    newAsteroids = [];
 
     for (let clientId in activeClients) {
         activeClients[clientId].player.reportUpdate = false;
@@ -291,6 +327,15 @@ function initializeSocketIO(httpServer) {
                 });
             }
         }
+        for (let asteroid in activeAsteroids) {
+            socket.emit(NetworkIds.ASTEROID_NEW, {
+                speed: activeAsteroids[asteroid].speed,
+                id: activeAsteroids[asteroid].id,
+                position: activeAsteroids[asteroid].position,
+                direction: activeAsteroids[asteroid].direction,
+                radius: activeAsteroids[asteroid].radius,
+            })
+        }
     }
 
     //------------------------------------------------------------------
@@ -318,7 +363,6 @@ function initializeSocketIO(httpServer) {
             player: newPlayer
         };
 
-        console.log(activeClients[socket.id].player.username);
         socket.emit(NetworkIds.CONNECT_ACK, {
             direction: newPlayer.direction,
             position: newPlayer.position,
@@ -334,11 +378,11 @@ function initializeSocketIO(httpServer) {
                 message: data
             });
         });
-        
+
         notifyConnect(socket, newPlayer);
     }
-    
-    io.on('connection', function(socket) {
+
+    io.on('connection', function (socket) {
         console.log('Connection established: ', socket.id);
         //
         // Create an entry in our list of connected clients
@@ -346,7 +390,7 @@ function initializeSocketIO(httpServer) {
             createServerPlayer(data, socket);
         })
 
-        socket.on('disconnect', function() {
+        socket.on('disconnect', function () {
             delete activeClients[socket.id];
             notifyDisconnect(socket.id);
         });
@@ -361,6 +405,9 @@ function initializeSocketIO(httpServer) {
 //------------------------------------------------------------------
 function initialize(httpServer) {
     initializeSocketIO(httpServer);
+    for (let i = 0; i < 500; i++) {
+        activeAsteroids.push(Asteroids.create());
+    }
     gameLoop(present(), 0);
 }
 

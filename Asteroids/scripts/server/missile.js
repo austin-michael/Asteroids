@@ -15,7 +15,7 @@ function createMissile(spec) {
 
     let radius = 0.0025;
     let speed = spec.speed * 3;    // unit distance per millisecond
-    let timeRemaining = 1500;   // milliseconds
+    let timeRemaining = 1000;   // milliseconds
 
     Object.defineProperty(that, 'clientId', {
         get: () => spec.clientId
