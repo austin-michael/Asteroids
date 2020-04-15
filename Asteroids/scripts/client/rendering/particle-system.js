@@ -3,7 +3,7 @@
 // Rendering function for an AnimatedSprite object.
 //
 // ------------------------------------------------------------------
-MyGame.renderer.AnimatedSprite = (function (graphics) {
+MyGame.renderer.ParticleSystem = (function (graphics) {
     'use strict';
     let that = {};
 
@@ -12,7 +12,7 @@ MyGame.renderer.AnimatedSprite = (function (graphics) {
     const SINGLE_TILE_WIDTH = 1 / TILE_WIDTH;
     const SINGLE_TILE_HEIGHT = 1 / TILE_HEIGHT;
 
-    that.render = function (sprite, playerModel, particleSystems) {
+    that.render = function (sprite, playerModel) {
 
         if (sprite.center.x >= playerModel.position.x - (SINGLE_TILE_WIDTH) &&
             sprite.center.x <= playerModel.position.x + (SINGLE_TILE_WIDTH) &&
@@ -51,8 +51,6 @@ MyGame.renderer.AnimatedSprite = (function (graphics) {
                 { x: spriteLocalPosition.x, y: spriteLocalPosition.y },
                 { width: sprite.width, height: sprite.height }
             );
-            particleSystems.particleSystemFire.createExplosion({x: spriteLocalPosition.x, y: spriteLocalPosition.y })
-            particleSystems.particleSystemSmoke.createExplosion({x: spriteLocalPosition.x, y: spriteLocalPosition.y })
         }
     };
 

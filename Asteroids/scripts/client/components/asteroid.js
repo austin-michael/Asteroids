@@ -3,7 +3,7 @@
 // Model for each missile in the game.
 //
 //------------------------------------------------------------------
-MyGame.components.Asteroid = function(spec) {
+MyGame.components.Asteroid = function (spec) {
     'use strict';
     let that = {};
 
@@ -22,7 +22,7 @@ MyGame.components.Asteroid = function(spec) {
     Object.defineProperty(that, 'id', {
         get: () => spec.id
     });
-    
+
     Object.defineProperty(that, 'direction', {
         get: () => spec.direction
     });
@@ -34,20 +34,20 @@ MyGame.components.Asteroid = function(spec) {
     // explodes.
     //
     //------------------------------------------------------------------
-    that.update = function(elapsedTime) {
+    that.update = function (elapsedTime) {
         spec.position.x += (spec.direction.x * elapsedTime * spec.speed);
         spec.position.y += (spec.direction.y * elapsedTime * spec.speed);
 
-        if (spec.position.x > 1){
+        if (spec.position.x > 1) {
             spec.position.x -= 1;
         }
-        if (spec.position.x < 0){
+        if (spec.position.x < 0) {
             spec.position.x += 1;
         }
-        if (spec.position.y > 1){
+        if (spec.position.y > 1) {
             spec.position.y -= 1;
         }
-        if (spec.position.y < 0){
+        if (spec.position.y < 0) {
             spec.position.y += 1;
         }
     };

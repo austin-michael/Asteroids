@@ -20,11 +20,12 @@ let activeClients = {};
 let newMissiles = [];
 let activeMissiles = [];
 let hits = [];
+let playerHits = [];
 let inputQueue = Queue.create();
 let nextMissileId = 1;
 let activeAsteroids = [];
 let newAsteroids = [];
-
+let highscores = [];
 
 //------------------------------------------------------------------
 //
@@ -44,6 +45,26 @@ function createMissile(clientId, playerModel) {
     });
 
     newMissiles.push(missile);
+}
+
+//------------------------------------------------------------------
+//
+// Add a disconnected players highscore (top 5 scores persist)
+//
+//------------------------------------------------------------------
+function addHighScore(username, score) {
+    let newHighScores = []
+    for (let i = 0 ; i < highscores.length; i++){
+        newHighScores.push(highscores[i]);
+    }
+    newHighScores.push({username: username, score: score});
+    newHighScores.sort(function (a, b) { return b.score - a.score }); // decending order
+
+    if (newHighScores.length > 5){
+        newHighScores.pop();
+    }
+    highscores = newHighScores;
+    // console.log(highscores);
 }
 
 //------------------------------------------------------------------
@@ -125,7 +146,7 @@ function update(elapsedTime, currentTime) {
     activeMissiles = keepMissiles;
 
     //
-    // Check to see if any missiles collide with any players (no friendly fire)
+    // Check to see if any missiles collide with any asteroids. Friendly fire disabled.
     keepMissiles = [];
     for (let missile = 0; missile < activeMissiles.length; missile++) {
         let hit = false;
@@ -136,13 +157,13 @@ function update(elapsedTime, currentTime) {
                     asteroidId: activeAsteroids[asteroidId].id,
                     missileId: activeMissiles[missile].id,
                     position: activeAsteroids[asteroidId].position,
-                    radius: activeAsteroids[asteroidId].radius
+                    radius: activeAsteroids[asteroidId].radius,
+                    playerId: activeMissiles[missile].clientId
                 })
-                if (activeAsteroids[asteroidId].radius > 1){
-                    let ast1 = Asteroids.create({x: activeAsteroids[asteroidId].position.x, y: activeAsteroids[asteroidId].position.y, radius: activeAsteroids[asteroidId].radius});
-                    let ast2 = Asteroids.create({x: activeAsteroids[asteroidId].position.x, y: activeAsteroids[asteroidId].position.y, radius: activeAsteroids[asteroidId].radius});
-                    let ast3 = Asteroids.create({x: activeAsteroids[asteroidId].position.x, y: activeAsteroids[asteroidId].position.y, radius: activeAsteroids[asteroidId].radius});
-                    delete activeAsteroids[asteroidId];
+                if (activeAsteroids[asteroidId].radius > 1) {
+                    let ast1 = Asteroids.create({ x: activeAsteroids[asteroidId].position.x, y: activeAsteroids[asteroidId].position.y, radius: activeAsteroids[asteroidId].radius });
+                    let ast2 = Asteroids.create({ x: activeAsteroids[asteroidId].position.x, y: activeAsteroids[asteroidId].position.y, radius: activeAsteroids[asteroidId].radius });
+                    let ast3 = Asteroids.create({ x: activeAsteroids[asteroidId].position.x, y: activeAsteroids[asteroidId].position.y, radius: activeAsteroids[asteroidId].radius });
                     newAsteroids.push(ast1);
                     newAsteroids.push(ast2);
                     newAsteroids.push(ast3);
@@ -150,7 +171,13 @@ function update(elapsedTime, currentTime) {
                     activeAsteroids.push(ast2);
                     activeAsteroids.push(ast3);
                 }
-
+                delete activeAsteroids[asteroidId];
+                for (let playerId in activeClients) {
+                    if (activeClients[playerId].player.clientId == activeMissiles[missile].clientId){
+                        activeClients[playerId].player.score += 10
+                        activeClients[playerId].player.reportUpdate = true;
+                    }
+                }
             }
         }
         if (!hit) {
@@ -158,6 +185,25 @@ function update(elapsedTime, currentTime) {
         }
     }
     activeMissiles = keepMissiles;
+
+    //
+    // Check to see if any player collided with any asteroids.
+    for (let playerId in activeClients) {
+        for (let asteroidId in activeAsteroids) {
+            if (collided(activeClients[playerId].player, { position: activeAsteroids[asteroidId].position, radius: activeAsteroids[asteroidId].radius * .002 })) {
+                playerHits.push({
+                    username: activeClients[playerId].player.username,
+                    position: activeClients[playerId].player.position,
+                    playerId: activeClients[playerId].clientId
+                })
+                activeClients[playerId].player.position = { x: .5, y: .5 }
+                activeClients[playerId].player.score -= 100;
+                activeClients[playerId].player.reportUpdate = true;
+                // activeClients[playerId].player.beenHit = true;
+                // activeClients[playerId].player.hitTimer = 2000;
+            }
+        }
+    }
 }
 
 //------------------------------------------------------------------
@@ -206,7 +252,8 @@ function updateClients(elapsedTime) {
             lastMessageId: client.lastMessageId,
             direction: client.player.direction,
             position: client.player.position,
-            updateWindow: lastUpdate
+            updateWindow: lastUpdate,
+            score: client.player.score
         };
         if (client.player.reportUpdate) {
             client.socket.emit(NetworkIds.UPDATE_SELF, update);
@@ -233,6 +280,12 @@ function updateClients(elapsedTime) {
             client.socket.emit(NetworkIds.MISSILE_HIT, hits[hit]);
         }
 
+        //
+        // Report any player/asteroid hits to this client
+        for (let p = 0; p < playerHits.length; p++) {
+            client.socket.emit(NetworkIds.PLAYER_HIT, playerHits[p]);
+        }
+
         for (let ast = 0; ast < newAsteroids.length; ast++) {
             client.socket.emit(NetworkIds.ASTEROID_NEW, {
                 speed: newAsteroids[ast].speed,
@@ -251,6 +304,7 @@ function updateClients(elapsedTime) {
         // }
     }
     newAsteroids = [];
+    playerHits = [];
 
     for (let clientId in activeClients) {
         activeClients[clientId].player.reportUpdate = false;
@@ -312,7 +366,8 @@ function initializeSocketIO(httpServer) {
                     rotateRate: newPlayer.rotateRate,
                     speed: newPlayer.speed,
                     size: newPlayer.size,
-                    username: newPlayer.username
+                    username: newPlayer.username,
+                    score: newPlayer.score
                 });
                 //
                 // Tell the new player about the already connected player
@@ -323,7 +378,8 @@ function initializeSocketIO(httpServer) {
                     rotateRate: client.player.rotateRate,
                     speed: client.player.speed,
                     size: client.player.size,
-                    username: activeClients[clientId].player.username
+                    username: activeClients[clientId].player.username,
+                    score: activeClients[clientId].player.score
                 });
             }
         }
@@ -349,7 +405,8 @@ function initializeSocketIO(httpServer) {
             let client = activeClients[clientId];
             if (playerId !== clientId) {
                 client.socket.emit(NetworkIds.DISCONNECT_OTHER, {
-                    clientId: playerId
+                    clientId: playerId,
+                    highscores: highscores
                 });
             }
         }
@@ -369,7 +426,8 @@ function initializeSocketIO(httpServer) {
             size: newPlayer.size,
             rotateRate: newPlayer.rotateRate,
             speed: newPlayer.speed,
-            username: newPlayer.username
+            username: newPlayer.username,
+            highscores: highscores
         });
 
         socket.on(NetworkIds.INPUT, data => {
@@ -384,6 +442,11 @@ function initializeSocketIO(httpServer) {
 
     io.on('connection', function (socket) {
         console.log('Connection established: ', socket.id);
+
+        socket.emit(NetworkIds.INITIAL_CONNECT, {
+            highscores: highscores
+        })
+
         //
         // Create an entry in our list of connected clients
         socket.on(NetworkIds.CREATE_PLAYER, data => {
@@ -391,8 +454,15 @@ function initializeSocketIO(httpServer) {
         })
 
         socket.on('disconnect', function () {
-            delete activeClients[socket.id];
-            notifyDisconnect(socket.id);
+            if (activeClients[socket.id] === undefined || activeClients[socket.id] === null) {
+                delete activeClients[socket.id];
+                notifyDisconnect(socket.id);
+            }
+            else {
+                addHighScore(activeClients[socket.id].player.username, activeClients[socket.id].player.score);
+                delete activeClients[socket.id];
+                notifyDisconnect(socket.id);
+            }
         });
 
     });

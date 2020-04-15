@@ -9,7 +9,7 @@ MyGame.persistence = (function (game) {
 
     // get previous highscores and controls or add controls if none.
     if (previousScores !== null) {
-        highScores = JSON.parse(previousScores);
+        localStorage['MyGame.highScores'] = '';
     }
     if (previousControls !== null && previousControls.length > 2) {
         controls = JSON.parse(previousControls);
@@ -28,7 +28,7 @@ MyGame.persistence = (function (game) {
         let minKey = key;
         let counter = 0;
         for (let score in highScores) {
-            if (parseInt(score.toString()) < parseInt(minKey.toString())) {
+            if (parseInt(highScores[score].key) < parseInt(minKey.toString())) {
                 minKey = score;
             }
             counter++;

@@ -67,6 +67,14 @@
         'ASTEROID_NEW': {
             value: 'asteroid-new',
             writable: false
+        },
+        'PLAYER_HIT': {
+            value: 'player-hit',
+            writable: false
+        },
+        'INITIAL_CONNECT': {
+            value: 'initial-connect',
+            writable: false
         }
     });
 

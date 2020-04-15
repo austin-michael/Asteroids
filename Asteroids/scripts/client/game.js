@@ -22,8 +22,16 @@ MyGame.screens['game-play'] = (function (graphics, renderer, input, components) 
         nextExplosionId = 1,
         socket = io(),
         networkQueue = Queue.create(),
-        cancelNextRequest = true;
+        cancelNextRequest = true,
 
+        laserSound = new Audio(),
+        explosionSound = new Audio(),
+        music = new Audio();
+    
+    laserSound.src = '../../assets/Laser.mp3';
+    explosionSound.src = '../../assets/explosion.mp3';
+    music.src = '../../assets/music.mp3'
+    music.loop = true;
 
     socket.on(NetworkIds.CONNECT_ACK, data => {
         networkQueue.enqueue({
@@ -81,6 +89,41 @@ MyGame.screens['game-play'] = (function (graphics, renderer, input, components) 
         });
     });
 
+    socket.on(NetworkIds.PLAYER_HIT, data => {
+        networkQueue.enqueue({
+            type: NetworkIds.PLAYER_HIT,
+            data: data
+        });
+    });
+
+    socket.on(NetworkIds.INITIAL_CONNECT, data => {
+        networkQueue.enqueue({
+            type: NetworkIds.INITIAL_CONNECT,
+            data: data
+        });
+    });
+
+    //------------------------------------------------------------------
+    //
+    // Create Generic Particle system for fire and smoke.
+    //
+    //------------------------------------------------------------------
+    let particleSystemFire = ParticleSystem(MyGame.graphics, {
+        image: MyGame.assets['fire'],
+        center: { x: .5, y: .5 },
+        size: { mean: .013, stdev: .005 },
+        speed: { mean: .0003, stdev: .0001 },
+        lifetime: { mean: 300, stdev: 50 }
+    });
+    let particleSystemSmoke = ParticleSystem(MyGame.graphics, {
+        image: MyGame.assets['smoke'],
+        center: { x: .5, y: .5 },
+        size: { mean: .013, stdev: .005 },
+        speed: { mean: .0003, stdev: .0001 },
+        lifetime: { mean: 300, stdev: 50 }
+    });
+
+
 
     //------------------------------------------------------------------
     //
@@ -101,6 +144,8 @@ MyGame.screens['game-play'] = (function (graphics, renderer, input, components) 
         playerSelf.model.speed = data.speed;
         playerSelf.model.rotateRate = data.rotateRate;
         playerSelf.model.username = data.username;
+
+        music.play();
     }
 
     //------------------------------------------------------------------
@@ -116,6 +161,7 @@ MyGame.screens['game-play'] = (function (graphics, renderer, input, components) 
         model.state.direction = data.direction;
         model.state.lastUpdate = performance.now();
         model.state.username = data.username;
+        model.state.score = data.score;
 
         model.goal.position.x = data.position.x;
         model.goal.position.y = data.position.y;
@@ -138,6 +184,10 @@ MyGame.screens['game-play'] = (function (graphics, renderer, input, components) 
     //
     //------------------------------------------------------------------
     function disconnectPlayerOther(data) {
+        //console.log(data.highscores);
+        for (let highScore in data.highscores) {
+            MyGame.persistence.addHS(data.highscores[highScore].score, `${data.highscores[highScore].username}: ${data.highscores[highScore].score}`)
+        }
         delete playerOthers[data.clientId];
     }
 
@@ -153,6 +203,7 @@ MyGame.screens['game-play'] = (function (graphics, renderer, input, components) 
         playerSelf.model.position.x = data.position.x;
         playerSelf.model.position.y = data.position.y;
         playerSelf.model.direction = data.direction;
+        playerSelf.model.score = data.score;
 
         //
         // Remove messages from the queue up through the last one identified
@@ -200,6 +251,7 @@ MyGame.screens['game-play'] = (function (graphics, renderer, input, components) 
             model.goal.position.x = data.position.x;
             model.goal.position.y = data.position.y
             model.goal.direction = data.direction;
+            model.state.score = data.score;
         }
     }
 
@@ -228,7 +280,6 @@ MyGame.screens['game-play'] = (function (graphics, renderer, input, components) 
     //
     //------------------------------------------------------------------
     function asteroidNew(data) {
-        console.log(data);
         asteroids[data.id] = components.Asteroid({
             id: data.id,
             radius: data.radius,
@@ -253,14 +304,59 @@ MyGame.screens['game-play'] = (function (graphics, renderer, input, components) 
             spriteSize: { width: 0.07 * data.radius, height: 0.07 * data.radius },
             spriteCenter: data.position,
             spriteCount: 16,
-            spriteTime: [50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50]
+            spriteTime: [20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20],
         });
+
+        if (!playerOthers.hasOwnProperty(data.playerId)){
+            explosionSound.play();
+        }
 
         //
         // When we receive a hit notification, go ahead and remove the
         // associated missle from the client model.
         delete missiles[data.missileId];
         delete asteroids[data.asteroidId];
+    }
+
+    //------------------------------------------------------------------
+    //
+    // Handler for receiving notice that an asteroid has hit a player.
+    //
+    //------------------------------------------------------------------
+    function playerHit(data) {
+        if (data.username == playerSelf.model.username) {
+            playerSelf.model.position = { x: .5, y: .5 }
+            playerSelf.model.window = { x: .5, y: .5 }
+            playerSelf.model.localPosition = { x: .5, y: .5 }
+        }
+        explosions[nextExplosionId] = components.AnimatedSprite({
+            id: nextExplosionId++,
+            spriteSheet: MyGame.assets['explosion'],
+            spriteSize: { width: 0.07, height: 0.07 },
+            spriteCenter: data.position,
+            spriteCount: 16,
+            spriteTime: [20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20],
+        });
+
+        if (!playerOthers.hasOwnProperty(data.playerId)){
+            explosionSound.play();
+        }
+
+        // if (data.username == playerSelf.model.username && !playerSelf.model.beenHit){
+        //     // playerSelf.model.beenHit = true;
+        //     // playerSelf.model.hitTimer = 2000;
+        //     console.log('in player Hit');
+        // }
+    }
+    //------------------------------------------------------------------
+    //
+    // Handler for receiving notice that an asteroid has hit a player.
+    //
+    //------------------------------------------------------------------
+    function loadHS(data) {
+        for (let highScore in data.highscores) {
+            MyGame.persistence.addHS(data.highscores[highScore].score, `${data.highscores[highScore].username}: ${data.highscores[highScore].score}`)
+        }
     }
 
     //------------------------------------------------------------------
@@ -306,6 +402,12 @@ MyGame.screens['game-play'] = (function (graphics, renderer, input, components) 
                 case NetworkIds.ASTEROID_NEW:
                     asteroidNew(message.data);
                     break;
+                case NetworkIds.PLAYER_HIT:
+                    playerHit(message.data);
+                    break;
+                case NetworkIds.INITIAL_CONNECT:
+                    loadHS(message.data);
+                    break;
             }
         }
     }
@@ -341,6 +443,10 @@ MyGame.screens['game-play'] = (function (graphics, renderer, input, components) 
         for (let ast in asteroids) {
             asteroids[ast].update(elapsedTime);
         }
+
+
+        particleSystemSmoke.update(elapsedTime);
+        particleSystemFire.update(elapsedTime);
     }
 
     //------------------------------------------------------------------
@@ -363,15 +469,19 @@ MyGame.screens['game-play'] = (function (graphics, renderer, input, components) 
             renderer.Missile.render(missiles[missile], playerSelf.model);
         }
 
+        particleSystemFire.render();
+        particleSystemSmoke.render();
+
         for (let ast in asteroids) {
             renderer.Asteroid.render(asteroids[ast], playerSelf.model, MyGame.assets['asteroid']);
         }
 
         for (let id in explosions) {
-            renderer.AnimatedSprite.render(explosions[id], playerSelf.model);
+            renderer.AnimatedSprite.render(explosions[id], playerSelf.model, { particleSystemFire, particleSystemSmoke });
         }
 
         renderer.miniMap.render(playerSelf, playerOthers, asteroids);
+        renderer.scoreboard.render(playerSelf, playerOthers);
     }
 
     //------------------------------------------------------------------
@@ -398,6 +508,8 @@ MyGame.screens['game-play'] = (function (graphics, renderer, input, components) 
     //------------------------------------------------------------------
     function initialize() {
         console.log('game initializing...');
+        while (networkQueue.length < 0 ) {};
+        processInput(0);
 
         //
         // Get the game loop started
@@ -442,6 +554,9 @@ MyGame.screens['game-play'] = (function (graphics, renderer, input, components) 
             MyGame.persistence.controls['Rotate Left'], true);
 
         myKeyboard.registerHandler(elapsedTime => {
+
+            laserSound.play();
+
             let message = {
                 id: messageId++,
                 elapsedTime: elapsedTime,

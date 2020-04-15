@@ -37,7 +37,7 @@ MyGame.loader = (function () {
             message: 'Controls loaded',
             onComplete: null,
         }, {
-            scripts: ['components/player', 'components/player-remote', 'components/missile', 'components/animated-sprite', 'components/asteroid'],
+            scripts: ['components/player', 'components/player-remote', 'components/missile', 'components/animated-sprite','components/particle-system', 'components/asteroid'],
             message: 'Player models loaded',
             onComplete: null
         }, {
@@ -45,7 +45,7 @@ MyGame.loader = (function () {
             message: 'Graphics loaded',
             onComplete: null
         }, {
-            scripts: ['rendering/player', 'rendering/player-remote', 'rendering/missile', 'rendering/animated-sprite', 'rendering/mini-map', 'rendering/asteroid'],
+            scripts: ['rendering/player', 'rendering/player-remote', 'rendering/missile', 'rendering/animated-sprite', 'rendering/mini-map', 'rendering/asteroid', 'rendering/score'],
             message: 'Renderers loaded',
             onComplete: null
         }, {
@@ -88,6 +88,15 @@ MyGame.loader = (function () {
         }, {
             key: 'world',
             source: 'assets/world_cropped.jpg'
+        }, {
+            key: 'fire',
+            source: 'assets/fire.png'
+        }, {
+            key: 'smoke',
+            source: 'assets/smoke.png'
+        }, {
+            key: 'laser',
+            source: 'assets/Laser.mp3'
         }];
 
     for (let i = 0; i <= 134; i++) {

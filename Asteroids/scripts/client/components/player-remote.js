@@ -20,7 +20,8 @@ MyGame.components.PlayerRemote = function() {
             x: 0,
             y: 0
         },
-        username: 'p1'
+        username: 'p1',
+        score: 0
     };
     let goal = {
         direction: 0,

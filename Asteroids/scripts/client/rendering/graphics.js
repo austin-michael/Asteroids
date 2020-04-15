@@ -3,7 +3,7 @@
 // This is the graphics rendering code for the game.
 //
 // ------------------------------------------------------------------
-MyGame.graphics = (function() {
+MyGame.graphics = (function () {
     'use strict';
 
     let canvas = document.getElementById('canvas-main');
@@ -15,7 +15,7 @@ MyGame.graphics = (function() {
     // of the canvas, rather than making a function that calls and does it.
     //
     //------------------------------------------------------------------
-    CanvasRenderingContext2D.prototype.clear = function() {
+    CanvasRenderingContext2D.prototype.clear = function () {
         this.save();
         this.setTransform(1, 0, 0, 1, 0, 0);
         this.clearRect(0, 0, canvas.width, canvas.height);
@@ -81,7 +81,18 @@ MyGame.graphics = (function() {
             localSize.width,
             localSize.height);
     }
-    
+
+    //------------------------------------------------------------------
+    //
+    // Draw text into the local canvas coordinate system.
+    //
+    //------------------------------------------------------------------
+    function drawText(spec) {
+        context.font = "16px Arial";
+        context.fillStyle = spec.color;
+        context.fillText(spec.text, spec.xPos, spec.yPos);
+    }
+
 
     //------------------------------------------------------------------
     //
@@ -119,6 +130,42 @@ MyGame.graphics = (function() {
         context.fill();
     }
 
+    // --------------------------------------------------------------
+    //
+    // Draws a texture to the canvas with the following specification:
+    //    image: Image
+    //    center: {x: , y: }
+    //    rotation:     // radians
+    //    size: { width: , height: }
+    //
+    // --------------------------------------------------------------
+    function drawTexture(image, center, rotation, size) {
+        let localCenter = {
+            x: center.x * canvas.width,
+            y: center.y * canvas.width
+        };
+        let localSize = {
+            width: size.x * canvas.width,
+            height: size.y * canvas.height
+        };
+        context.save();
+        // console.log('localCenter: ', localCenter);
+        // console.log('localSize: ', localSize);
+        // console.log('size: ', size);
+        // console.log('renderX: ', localCenter.x - (localSize.width / 2))
+        // console.log('renderY: ', localCenter.y - (localSize.height / 2))
+        context.translate(localCenter.x, localCenter.y);
+        context.rotate(rotation);
+        context.translate(-localCenter.x, -localCenter.y);
+        context.drawImage(
+            image,
+            localCenter.x - localSize.width / 2,
+            localCenter.y - localSize.height / 2,
+            localSize.width, localSize.height);
+
+        context.restore();
+    }
+
     return {
         clear: clear,
         saveContext: saveContext,
@@ -126,6 +173,8 @@ MyGame.graphics = (function() {
         rotateCanvas: rotateCanvas,
         drawImage: drawImage,
         drawImageSpriteSheet: drawImageSpriteSheet,
-        drawCircle: drawCircle
+        drawCircle: drawCircle,
+        drawText: drawText,
+        drawTexture: drawTexture,
     };
 }());
